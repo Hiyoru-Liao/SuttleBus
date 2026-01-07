@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シャトルバス運行情報</title>
+    <style>
+        :root { --primary: #007AFF; --bg: #F2F2F7; }
+        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 500px; margin: auto; }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h2 { margin-top: 0; font-size: 1.1rem; border-bottom: 2px solid var(--bg); padding-bottom: 10px; color: #444; }
+        .status-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; margin-bottom: 15px; }
+        .weekday { background: #E3F2FD; color: #1976D2; }
+        .weekend { background: #FFEBEE; color: #D32F2F; }
+        .result-item { margin: 20px 0; border-left: 4px solid var(--primary); padding-left: 15px; }
+        .location { font-size: 0.9rem; color: #777; font-weight: bold; }
+        .next-time { font-size: 1.8rem; font-weight: 800; color: var(--primary); display: block; margin-top: 5px; }
+        .error-msg { font-size: 1rem; color: #D32F2F; font-weight: bold; line-height: 1.4; }
+        textarea { width: 100%; height: 70px; border: 1px solid #DDD; border-radius: 8px; padding: 10px; box-sizing: border-box; font-size: 0.9rem; font-family: monospace; }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; font-size: 0.85rem; color: #555; }
+        .holiday-toggle { background: #fff; padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ddd; }
+        .footer { text-align: center; font-size: 0.8rem; color: #999; margin-top: 30px; }
+        strong { color: #222; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <div id="dayTypeTag" class="status-tag">取得中...</div>
+        
+        <div class="result-item">
+            <span class="location">品川駅 発 (Shinagawa Sta.)</span>
+            <span id="shinagawaNext" class="next-time">--:--</span>
+        </div>
+        <div class="result-item">
+            <span class="location">ホテル 発 (Hotel)</span>
+            <span id="hotelNext" class="next-time">--:--</span>
+        </div>
+    </div>
+
+    <div class="holiday-toggle">
+        <span style="font-weight: bold;">今日は祝日ですか？</span>
+        <input type="checkbox" id="holidayManual" onchange="updateDisplay()" style="width: 20px; height: 20px;">
+    </div>
+
+    <div class="card">
+        <h2>時刻表設定 (Schedule)</h2>
+        
+        <p><strong>📅 平日時刻表 (Weekday)</strong></p>
+        <label>品川駅：</label>
+        <textarea id="s_weekday">08:00, 09:00, 10:00, 17:00, 19:00, 21:00, 23:00</textarea>
+        <label>ホテル：</label>
+        <textarea id="h_weekday">07:30, 08:30, 09:30, 16:30, 18:30, 20:30, 22:30</textarea>
+
+        <p style="margin-top:25px;"><strong>🎉 土日祝時刻表 (Weekend/Holiday)</strong></p>
+        <label>品川駅：</label>
+        <textarea id="s_weekend">09:00, 11:00, 13:00, 15:00, 17:00, 19:00, 21:00</textarea>
+        <label>ホテル：</label>
+        <textarea id="h_weekend">08:30, 10:30, 12:30, 14:30, 16:30, 18:30, 20:30</textarea>
+    </div>
+
+    <div class="footer">
+        現在時刻：<span id="currentTime"></span><br>
+        &copy; Shuttle Bus Finder
+    </div>
+</div>
+
+<script>
+    function isWeekend() {
+        const now = new Date();
+        const day = now.getDay(); // 0:日, 6:土
+        const isManualHoliday = document.getElementById('holidayManual').checked;
+        return (day === 0 || day === 6 || isManualHoliday);
+    }
+
+    function getNextBus(inputStr) {
+        // 分割文字列、ソート
+        const schedule = inputStr.split(/[\s,，]+/)
+            .filter(t => t.match(/^([01]\d|2[0-3]):([0-5]\d)$/))
+            .sort();
+
+        const now = new Date();
+        const nowStr = now.getHours().toString().padStart(2, '0') + ":" + 
+                       now.getMinutes().toString().padStart(2, '0');
+
+        const nextBus = schedule.find(time => time > nowStr);
+
+        if (nextBus) {
+            return nextBus;
+        } else {
+            return "【申し訳ございません、終便は既に出発されました】";
+        }
+    }
+
+    function updateDisplay() {
+        const weekendMode = isWeekend();
+        const tag = document.getElementById('dayTypeTag');
+        
+        if (weekendMode) {
+            tag.innerText = "本日：土日祝ダイヤ (Weekend/Holiday)";
+            tag.className = "status-tag weekend";
+        } else {
+            tag.innerText = "本日：平日ダイヤ (Weekday)";
+            tag.className = "status-tag weekday";
+        }
+
+        const sInput = weekendMode ? 's_weekend' : 's_weekday';
+        const hInput = weekendMode ? 'h_weekend' : 'h_weekday';
+
+        const nextShinagawa = getNextBus(document.getElementById(sInput).value);
+        const nextHotel = getNextBus(document.getElementById(hInput).value);
+
+        const sElem = document.getElementById('shinagawaNext');
+        const hElem = document.getElementById('hotelNext');
+
+        sElem.innerText = nextShinagawa;
+        hElem.innerText = nextHotel;
+
+        // 終電メッセージのスタイル調整
+        sElem.className = nextShinagawa.includes('申し訳') ? 'error-msg' : 'next-time';
+        hElem.className = nextHotel.includes('申し訳') ? 'error-msg' : 'next-time';
+
+        document.getElementById('currentTime').innerText = new Date().toLocaleTimeString('ja-JP');
+    }
+
+    // 1秒ごとに更新
+    setInterval(updateDisplay, 1000);
+    // 初回実行
+    updateDisplay();
+</script>
+
+</body>
+</html>

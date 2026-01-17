@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>シャトルバス運行情報</title>
     <style>
-        :root { --primary: #007AFF; --bg: #F2F2F7; }
-        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        :root { --primary: #007AFF; --bg: #F2F2F7; --accent: #34C759; }
+        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; padding-bottom: 100px; /* 為底部懸浮窗預留空間 */ }
         .container { max-width: 500px; margin: auto; }
         .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
         h2 { margin-top: 0; font-size: 1.1rem; border-bottom: 2px solid var(--bg); padding-bottom: 10px; color: #444; }
@@ -16,12 +16,33 @@
         .result-item { margin: 20px 0; border-left: 4px solid var(--primary); padding-left: 15px; }
         .location { font-size: 0.9rem; color: #777; font-weight: bold; }
         .next-time { font-size: 1.8rem; font-weight: 800; color: var(--primary); display: block; margin-top: 5px; }
-        .error-msg { font-size: 1rem; color: #D32F2F; font-weight: bold; line-height: 1.4; }
+        .error-msg { font-size: 0.95rem; color: #D32F2F; font-weight: bold; line-height: 1.4; }
         textarea { width: 100%; height: 70px; border: 1px solid #DDD; border-radius: 8px; padding: 10px; box-sizing: border-box; font-size: 0.9rem; font-family: monospace; }
         label { display: block; margin: 15px 0 5px; font-weight: bold; font-size: 0.85rem; color: #555; }
         .holiday-toggle { background: #fff; padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ddd; }
-        .footer { text-align: center; font-size: 0.8rem; color: #999; margin-top: 30px; }
-        strong { color: #222; }
+        
+        /* 右下角懸浮窗樣式 */
+        .floating-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 160px;
+            background: rgba(44, 44, 46, 0.95);
+            color: white;
+            padding: 12px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.8rem;
+        }
+        .widget-title { font-weight: bold; font-size: 0.7rem; color: #AAA; margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 3px; }
+        .widget-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .widget-val { font-weight: bold; color: #5AC8FA; }
+        .widget-val.over { color: #FF453A; font-size: 0.7rem; }
+
+        .footer { text-align: center; font-size: 0.8rem; color: #999; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -31,7 +52,7 @@
         <div id="dayTypeTag" class="status-tag">取得中...</div>
         
         <div class="result-item">
-            <span class="location">品川駅 発 (Shinagawa Sta.)</span>
+            <span class="location">品川駅 発 (Shinagawa)</span>
             <span id="shinagawaNext" class="next-time">--:--</span>
         </div>
         <div class="result-item">
@@ -46,88 +67,85 @@
     </div>
 
     <div class="card">
-        <h2>時刻表設定 (Schedule)</h2>
-        
-        <p><strong>📅 平日時刻表 (Weekday)</strong></p>
-        <label>品川駅：</label>
+        <h2>時刻表設定</h2>
+        <label>📅 平日 - 品川駅：</label>
         <textarea id="s_weekday">07:54, 08:08, 08:22, 08:36, 08:51, 09:07, 09:23, 09:39, 09:56, 10:14, 10:48, 11:22, 11:56, 12:30, 13:04, 13:48, 14:12, 14:46, 15:20, 15:54, 16:27, 17:00, 17:32, 18:03, 18:34, 19:06</textarea>
-        <label>ホテル：</label>
+        <label>📅 平日 - ホテル：</label>
         <textarea id="h_weekday">07:57, 08:11, 08:25, 08:40, 08:55, 09:11, 09:28, 09:46, 10:20, 10:54, 11:28, 12:02, 12:36, 13:10, 13:44, 14:18, 14:52, 15:26, 16:00, 16:34, 17:06, 17:37, 18:08, 18:39, 19:10</textarea>
 
-        <p style="margin-top:25px;"><strong>🎉 土日祝時刻表 (Weekend/Holiday)</strong></p>
-        <label>品川駅：</label>
+        <label style="margin-top:20px;">🎉 土日祝 - 品川駅：</label>
         <textarea id="s_weekend">09:27, 10:00, 10:34, 11:08, 11:42, 12:16, 12:50, 13:24, 13:58, 14:32, 15:06 15:40, 16:14, 16:48, 17:22, 17:56, 18:31, 19:06</textarea>
-        <label>ホテル：</label>
+        <label>🎉 土日祝 - ホテル：</label>
         <textarea id="h_weekend">09:01, 09:33, 10:06, 10:40, 11:14, 11:48, 12:22, 12:56, 13:30, 14:04, 14:38, 15:12, 15:46, 16:20, 16:54, 17:28, 18:02, 18:36, 19:10</textarea>
     </div>
 
     <div class="footer">
-        現在時刻：<span id="currentTime"></span><br>
-        &copy; Shuttle Bus Finder
+        現在時刻：<span id="currentTime"></span>
+    </div>
+</div>
+
+<div class="floating-widget" id="miniWidget">
+    <div class="widget-title">NEXT BUS</div>
+    <div class="widget-row">
+        <span>品川駅:</span>
+        <span id="w-shinagawa" class="widget-val">--:--</span>
+    </div>
+    <div class="widget-row">
+        <span>ホテル:</span>
+        <span id="w-hotel" class="widget-val">--:--</span>
     </div>
 </div>
 
 <script>
     function isWeekend() {
         const now = new Date();
-        const day = now.getDay(); // 0:日, 6:土
-        const isManualHoliday = document.getElementById('holidayManual').checked;
-        return (day === 0 || day === 6 || isManualHoliday);
+        const day = now.getDay();
+        return (day === 0 || day === 6 || document.getElementById('holidayManual').checked);
     }
 
     function getNextBus(inputStr) {
-        // 分割文字列、ソート
         const schedule = inputStr.split(/[\s,，]+/)
             .filter(t => t.match(/^([01]\d|2[0-3]):([0-5]\d)$/))
             .sort();
-
         const now = new Date();
         const nowStr = now.getHours().toString().padStart(2, '0') + ":" + 
                        now.getMinutes().toString().padStart(2, '0');
-
         const nextBus = schedule.find(time => time > nowStr);
-
-        if (nextBus) {
-            return nextBus;
-        } else {
-            return "【申し訳ございません、終便は既に出発されました】";
-        }
+        return nextBus || "終便終了";
     }
 
     function updateDisplay() {
         const weekendMode = isWeekend();
         const tag = document.getElementById('dayTypeTag');
-        
-        if (weekendMode) {
-            tag.innerText = "本日：土日祝ダイヤ (Weekend/Holiday)";
-            tag.className = "status-tag weekend";
-        } else {
-            tag.innerText = "本日：平日ダイヤ (Weekday)";
-            tag.className = "status-tag weekday";
-        }
+        tag.innerText = weekendMode ? "本日：土日祝ダイヤ" : "本日：平日ダイヤ";
+        tag.className = "status-tag " + (weekendMode ? "weekend" : "weekday");
 
         const sInput = weekendMode ? 's_weekend' : 's_weekday';
         const hInput = weekendMode ? 'h_weekend' : 'h_weekday';
 
-        const nextShinagawa = getNextBus(document.getElementById(sInput).value);
-        const nextHotel = getNextBus(document.getElementById(hInput).value);
+        const nextS = getNextBus(document.getElementById(sInput).value);
+        const nextH = getNextBus(document.getElementById(hInput).value);
 
+        // 主畫面更新
         const sElem = document.getElementById('shinagawaNext');
         const hElem = document.getElementById('hotelNext');
+        sElem.innerText = nextS === "終便終了" ? "【申し訳ございません、終便は既に出発されました】" : nextS;
+        hElem.innerText = nextH === "終便終了" ? "【申し訳ございません、終便は既に出發されました】" : nextH;
+        sElem.className = nextS === "終便終了" ? "error-msg" : "next-time";
+        hElem.className = nextH === "終便終了" ? "error-msg" : "next-time";
 
-        sElem.innerText = nextShinagawa;
-        hElem.innerText = nextHotel;
-
-        // 終電メッセージのスタイル調整
-        sElem.className = nextShinagawa.includes('申し訳') ? 'error-msg' : 'next-time';
-        hElem.className = nextHotel.includes('申し訳') ? 'error-msg' : 'next-time';
+        // 小視窗更新
+        const ws = document.getElementById('w-shinagawa');
+        const wh = document.getElementById('w-hotel');
+        ws.innerText = nextS;
+        wh.innerText = nextH;
+        ws.className = nextS === "終便終了" ? "widget-val over" : "widget-val";
+        wh.className = nextH === "終便終了" ? "widget-val over" : "widget-val";
 
         document.getElementById('currentTime').innerText = new Date().toLocaleTimeString('ja-JP');
     }
 
-    // 1秒ごとに更新
     setInterval(updateDisplay, 1000);
-    // 初回実行
     updateDisplay();
 </script>
 

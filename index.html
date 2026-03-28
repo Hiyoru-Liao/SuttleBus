@@ -10,7 +10,7 @@
             --m-black: #000000;
             --m-gold: #b4975a;
             --m-white: #ffffff;
-            --m-red: #e0001a; /* マリオット・レッド */
+            --m-red: #e0001a;
             --m-gold-light: rgba(180, 151, 90, 0.4);
             --bg-dark: #121212;
             --card-bg: #1e1e1e;
@@ -55,29 +55,18 @@
         }
         .fs-next-time { font-size: 22vw; font-weight: bold; line-height: 0.8; margin: 2vh 0; }
         
-        /* 配色の調整：英字はゴールド、数字は白 */
-        .fs-eta { 
-            font-size: 6vw; 
-            color: var(--m-gold); /* 英字部分をゴールドに */
-        }
-        .fs-eta .num {
-            color: var(--m-white); /* 数字部分を白に */
-            font-weight: bold;
-        }
+        .fs-eta { font-size: 6vw; color: var(--m-gold); }
+        .fs-eta .num { color: var(--m-white); font-weight: bold; }
 
         .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 25px; }
-        
-        /* ロゴを赤色にするフィルタ */
         .fs-logo { 
-            width: 150px; 
-            height: auto;
+            width: 150px; height: auto;
             filter: invert(15%) sepia(95%) saturate(6932%) hue-rotate(354deg) brightness(92%) contrast(121%);
             opacity: 0.9;
         }
-        
         .fs-clock { font-size: 2.2vw; opacity: 0.6; font-weight: 300; }
 
-        /* --- エレガントな時刻表 --- */
+        /* --- 時刻表オーバーレイ --- */
         #schedule-overlay {
             display: none;
             position: absolute;
@@ -85,14 +74,34 @@
             background: rgba(0,0,0,0.96);
             backdrop-filter: blur(20px);
             z-index: 3100;
+            /* タイトルのために flex 構成に変更 */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5vh 5vw;
+            box-sizing: border-box;
+        }
+
+        .overlay-title {
+            font-size: 4vw;
+            font-weight: bold;
+            color: var(--m-gold);
+            margin-bottom: 4vh;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .tile-container {
+            display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             justify-content: center;
             align-content: center;
             gap: 25px;
-            padding: 10vh 10vw;
-            box-sizing: border-box;
+            width: 100%;
+            max-width: 1200px;
             overflow-y: auto;
         }
+
         .tile {
             padding: 25px 10px;
             border: 2px solid var(--m-gold);
@@ -122,25 +131,19 @@
             <button onclick="enterFullScreen()">全画面表示</button>
         </div>
     </div>
-
     <div class="next-info-grid">
         <div class="info-card"><h2>ホテル発 (Hotel)</h2><div id="adm-h-time" class="time-val">--:--</div></div>
         <div class="info-card"><h2>品川駅発 (Shinagawa)</h2><div id="adm-s-time" class="time-val">--:--</div></div>
     </div>
-
     <div class="schedule-section">
         <div class="day-group">
             <h3>【平日】</h3>
-            <label>ホテル発</label>
             <textarea id="h_wkday">08:00, 08:30, 09:04, 09:40, 10:16, 10:52, 16:04, 16:39, 17:14, 17:47, 18:20, 18:55, 19:30</textarea>
-            <label>品川駅発</label>
             <textarea id="s_wkday">07:54, 08:22, 08:52, 09:26, 10:02, 10:38, 11:14, 16:26, 17:00, 17:36, 18:08, 18:41, 19:16</textarea>
         </div>
         <div class="day-group">
             <h3>【土日祝】</h3>
-            <label>ホテル発</label>
             <textarea id="h_weekend">09:28, 10:00, 10:32, 11:04, 11:36, 12:08, 12:41, 14:20, 14:55, 15:30, 16:05, 16:40, 17:15, 17:50</textarea>
-            <label>品川駅発</label>
             <textarea id="s_weekend">09:47, 10:19, 10:51, 11:23, 11:55, 12:28, 14:40, 15:16, 15:51, 16:26, 17:01, 17:36</textarea>
         </div>
     </div>
@@ -149,12 +152,17 @@
 <div id="fullscreen-view" ondblclick="exitFullScreen()">
     <p class="fs-label">Next Shuttle Bus</p>
     <h1 id="fs-time" class="fs-next-time">--:--</h1>
-    <div id="fs-eta" class="fs-eta"></div> <div class="fs-footer">
+    <div id="fs-eta" class="fs-eta"></div>
+
+    <div class="fs-footer">
         <img src="https://shop.marriott.com/on/demandware.static/Sites-MBB-US-Site/-/default/dwd2983f65/images/brand/marriott.svg" alt="Marriott Logo" class="fs-logo">
         <div id="fs-clock" class="fs-clock">00:00:00</div>
     </div>
 
-    <div id="schedule-overlay"></div>
+    <div id="schedule-overlay">
+        <div class="overlay-title">Today's Timetable</div>
+        <div id="tile-list" class="tile-container"></div>
+    </div>
 </div>
 
 <canvas id="pip-canvas" width="400" height="250"></canvas>
@@ -165,7 +173,6 @@
         return document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s !== "");
     }
 
-    // 数字を <span class="num"> で囲むように修正
     function formatEtaHtml(diffMin) {
         if (diffMin === null) return "";
         if (diffMin >= 60) {
@@ -205,7 +212,6 @@
         document.getElementById('adm-s-time').innerText = nS.time;
 
         document.getElementById('fs-time').innerText = nH.time;
-        // .innerHTML を使ってカラー分けしたHTMLを表示
         document.getElementById('fs-eta').innerHTML = nH.eta !== null ? formatEtaHtml(nH.eta) : "";
         document.getElementById('fs-clock').innerText = now.toLocaleTimeString('ja-JP', { hour12: false });
 
@@ -227,12 +233,14 @@
 
     document.getElementById('fullscreen-view').addEventListener('click', (e) => {
         const overlay = document.getElementById('schedule-overlay');
-        if (overlay.style.display === 'grid') {
+        const list = document.getElementById('tile-list');
+        
+        if (overlay.style.display === 'flex') {
             overlay.style.display = 'none';
             return;
         }
         
-        overlay.innerHTML = '';
+        list.innerHTML = '';
         const now = new Date();
         const nowMin = now.getHours() * 60 + now.getMinutes();
         const isWeekend = (now.getDay() === 0 || now.getDay() === 6 || document.getElementById('isHoliday').checked);
@@ -243,9 +251,9 @@
             const div = document.createElement('div');
             div.className = `tile ${(h * 60 + m) <= nowMin ? 'passed' : ''}`;
             div.innerText = t;
-            overlay.appendChild(div);
+            list.appendChild(div);
         });
-        overlay.style.display = 'grid';
+        overlay.style.display = 'flex';
         e.stopPropagation();
     });
 

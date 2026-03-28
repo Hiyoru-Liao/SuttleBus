@@ -10,7 +10,6 @@
             --m-black: #000000;
             --m-gold: #b4975a;
             --m-white: #ffffff;
-            --m-red: #e0001a; /* マリオット・レッドに近い鮮やかな赤 */
             --m-gold-light: rgba(180, 151, 90, 0.4);
             --bg-dark: #121212;
             --card-bg: #1e1e1e;
@@ -58,22 +57,22 @@
         /* ETAエリアの配色調整 */
         .fs-eta { 
             font-size: 6vw; 
-            opacity: 1; 
             color: var(--m-gold); /* "Departs in" などの英字をゴールドに */
         }
         .fs-eta span.num {
-            color: var(--m-white); /* 数字だけを白に */
+            color: var(--m-white); /* 数字だけを白に設定 */
             font-weight: bold;
         }
 
         .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 25px; }
         
-        /* ロゴを赤色に変更するためのフィルタ */
+        /* ロゴをゴールドに変更するためのフィルタ */
         .fs-logo { 
             width: 150px; 
             height: auto;
-            /* 黒を赤に変えるための特殊フィルタ (Hue-rotate等を使用) */
-            filter: invert(15%) sepia(95%) saturate(6932%) hue-rotate(354deg) brightness(92%) contrast(121%);
+            /* 黒をゴールドに変換するフィルタ設定 */
+            filter: invert(68%) sepia(16%) saturate(1141%) hue-rotate(1deg) brightness(91%) contrast(85%);
+            opacity: 0.9;
         }
         
         .fs-clock { font-size: 2.2vw; opacity: 0.6; font-weight: 300; color: var(--m-white); }
@@ -140,7 +139,9 @@
 <div id="fullscreen-view" ondblclick="exitFullScreen()">
     <p class="fs-label">Next Shuttle Bus</p>
     <h1 id="fs-time" class="fs-next-time">--:--</h1>
-    <div id="fs-eta" class="fs-eta"></div> <div class="fs-footer">
+    <div id="fs-eta" class="fs-eta"></div>
+
+    <div class="fs-footer">
         <img src="https://shop.marriott.com/on/demandware.static/Sites-MBB-US-Site/-/default/dwd2983f65/images/brand/marriott.svg" alt="Marriott Logo" class="fs-logo">
         <div id="fs-clock" class="fs-clock">00:00:00</div>
     </div>
@@ -153,7 +154,7 @@
         return document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s !== "");
     }
 
-    // 数字部分だけを <span> で囲む関数
+    // 数字を白、英字をゴールドにするためのHTML生成
     function formatEtaHtml(diffMin) {
         if (diffMin === null) return "";
         if (diffMin >= 60) {
@@ -184,11 +185,15 @@
         const now = new Date();
         const isWeekend = (now.getDay() === 0 || now.getDay() === 6 || document.getElementById('isHoliday').checked);
         const hTimes = isWeekend ? getTimes('h_weekend') : getTimes('h_wkday');
-        const nH = findNext(hTimes);
+        const sTimes = isWeekend ? getTimes('s_weekend') : getTimes('s_wkday');
 
-        // 管理画面用（省略）
+        const nH = findNext(hTimes);
+        const nS = findNext(sTimes);
+
+        document.getElementById('adm-h-time').innerText = nH.time;
+        document.getElementById('adm-s-time').innerText = nS.time;
+
         document.getElementById('fs-time').innerText = nH.time;
-        // HTMLとして挿入することで数字の色分けを適用
         document.getElementById('fs-eta').innerHTML = nH.eta !== null ? formatEtaHtml(nH.eta) : "";
         document.getElementById('fs-clock').innerText = now.toLocaleTimeString('ja-JP', { hour12: false });
     }

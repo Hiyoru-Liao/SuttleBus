@@ -55,11 +55,11 @@
         .fs-next-time { font-size: 22vw; font-weight: bold; line-height: 0.8; margin: 2vh 0; }
         .fs-eta { font-size: 6vw; opacity: 0.9; }
 
-        .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 15px; }
-        .fs-logo { width: 50px; height: 50px; }
-        .fs-clock { font-size: 2.2vw; opacity: 0.6; }
+        .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 20px; }
+        .fs-logo { width: 60px; height: auto; }
+        .fs-clock { font-size: 2.2vw; opacity: 0.6; font-weight: 300; }
 
-        /* --- エレガントな時刻表 (中央揃え調整) --- */
+        /* --- エレガントな時刻表 --- */
         #schedule-overlay {
             display: none;
             position: absolute;
@@ -68,8 +68,8 @@
             backdrop-filter: blur(20px);
             z-index: 3100;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            justify-content: center; /* 横方向の中央揃え */
-            align-content: center;   /* 縦方向の中央揃え */
+            justify-content: center;
+            align-content: center;
             gap: 25px;
             padding: 10vh 10vw;
             box-sizing: border-box;
@@ -134,7 +134,9 @@
     <p id="fs-eta" class="fs-eta">Departs in -- min</p>
 
     <div class="fs-footer">
-        <svg class="fs-logo" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#b4975a"/><text x="50" y="75" font-family="Arial" font-size="70" fill="black" text-anchor="middle" font-weight="bold">M</text></svg>
+        <svg class="fs-logo" viewBox="0 0 100 80" preserveAspectRatio="xMidYMid meet">
+            <path d="M10,80 L10,20 L30,20 L50,55 L70,20 L90,20 L90,80 L75,80 L75,45 L50,80 L25,45 L25,80 Z" fill="var(--m-gold)"/>
+        </svg>
         <div id="fs-clock" class="fs-clock">00:00:00</div>
     </div>
 
@@ -188,7 +190,6 @@
         document.getElementById('adm-s-time').innerText = nS.time;
 
         document.getElementById('fs-time').innerText = nH.time;
-        // End of Service のときはカウントダウンを表示しない
         document.getElementById('fs-eta').innerText = nH.eta !== null ? formatEta(nH.eta) : "";
         document.getElementById('fs-clock').innerText = now.toLocaleTimeString('ja-JP', { hour12: false });
 

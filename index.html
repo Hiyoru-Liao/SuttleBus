@@ -57,21 +57,21 @@
         /* ETAエリアの配色調整 */
         .fs-eta { 
             font-size: 6vw; 
-            color: var(--m-gold); /* "Departs in" などの英字をゴールドに */
+            color: var(--m-white); /* 英字を白に設定 */
         }
         .fs-eta span.num {
-            color: var(--m-white); /* 数字だけを白に設定 */
+            color: var(--m-gold); /* 数字（カウントダウン）だけを金に設定 */
             font-weight: bold;
+            text-shadow: 0 0 10px var(--m-gold-light); /* 数字を少し輝かせる */
         }
 
         .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 25px; }
         
-        /* ロゴをゴールドに変更するためのフィルタ */
+        /* ロゴを白に変更するためのフィルタ */
         .fs-logo { 
             width: 150px; 
             height: auto;
-            /* 黒をゴールドに変換するフィルタ設定 */
-            filter: invert(68%) sepia(16%) saturate(1141%) hue-rotate(1deg) brightness(91%) contrast(85%);
+            filter: brightness(0) invert(1); /* 黒いSVGを白に反転 */
             opacity: 0.9;
         }
         
@@ -154,7 +154,6 @@
         return document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s !== "");
     }
 
-    // 数字を白、英字をゴールドにするためのHTML生成
     function formatEtaHtml(diffMin) {
         if (diffMin === null) return "";
         if (diffMin >= 60) {
@@ -185,10 +184,8 @@
         const now = new Date();
         const isWeekend = (now.getDay() === 0 || now.getDay() === 6 || document.getElementById('isHoliday').checked);
         const hTimes = isWeekend ? getTimes('h_weekend') : getTimes('h_wkday');
-        const sTimes = isWeekend ? getTimes('s_weekend') : getTimes('s_wkday');
-
         const nH = findNext(hTimes);
-        const nS = findNext(sTimes);
+        const nS = findNext(isWeekend ? getTimes('s_weekend') : getTimes('s_wkday'));
 
         document.getElementById('adm-h-time').innerText = nH.time;
         document.getElementById('adm-s-time').innerText = nS.time;

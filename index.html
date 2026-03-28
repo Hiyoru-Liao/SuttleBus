@@ -10,6 +10,7 @@
             --m-black: #000000;
             --m-gold: #b4975a;
             --m-white: #ffffff;
+            --m-red: #e0001a; /* マリオット・レッドに近い鮮やかな赤 */
             --m-gold-light: rgba(180, 151, 90, 0.4);
             --bg-dark: #121212;
             --card-bg: #1e1e1e;
@@ -52,23 +53,32 @@
             font-size: 8vw; font-weight: bold; color: var(--m-gold); margin: 0;
             text-shadow: 0 0 15px var(--m-gold-light), 0 0 5px var(--m-gold);
         }
-        .fs-next-time { font-size: 22vw; font-weight: bold; line-height: 0.8; margin: 2vh 0; }
-        .fs-eta { font-size: 6vw; opacity: 0.9; }
+        .fs-next-time { font-size: 22vw; font-weight: bold; line-height: 0.8; margin: 2vh 0; color: var(--m-white); }
+        
+        /* ETAエリアの配色調整 */
+        .fs-eta { 
+            font-size: 6vw; 
+            opacity: 1; 
+            color: var(--m-gold); /* "Departs in" などの英字をゴールドに */
+        }
+        .fs-eta span.num {
+            color: var(--m-white); /* 数字だけを白に */
+            font-weight: bold;
+        }
 
         .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 25px; }
         
-        /* ロゴのスタイル設定 */
+        /* ロゴを赤色に変更するためのフィルタ */
         .fs-logo { 
-            width: 150px; /* ロゴの幅を調整（必要に応じて変更してください） */
+            width: 150px; 
             height: auto;
-            /* 黒いSVGを白く反転させるフィルタ */
-            filter: brightness(0) invert(1);
-            opacity: 0.8; /* 少し透過させて背景になじませる */
+            /* 黒を赤に変えるための特殊フィルタ (Hue-rotate等を使用) */
+            filter: invert(15%) sepia(95%) saturate(6932%) hue-rotate(354deg) brightness(92%) contrast(121%);
         }
         
-        .fs-clock { font-size: 2.2vw; opacity: 0.6; font-weight: 300; }
+        .fs-clock { font-size: 2.2vw; opacity: 0.6; font-weight: 300; color: var(--m-white); }
 
-        /* --- エレガントな時刻表 --- */
+        /* --- 時刻表オーバーレイ --- */
         #schedule-overlay {
             display: none;
             position: absolute;
@@ -94,9 +104,6 @@
             color: var(--m-white);
         }
         .tile.passed { opacity: 0.15; border-color: #444; }
-
-        #pip-canvas { display: none; }
-        #pip-video { display: none; }
     </style>
 </head>
 <body>
@@ -109,29 +116,22 @@
                 <label>祝日モード</label>
                 <input type="checkbox" id="isHoliday">
             </div>
-            <button onclick="startPiP()">最前面表示</button>
             <button onclick="enterFullScreen()">全画面表示</button>
         </div>
     </div>
-
     <div class="next-info-grid">
         <div class="info-card"><h2>ホテル発 (Hotel)</h2><div id="adm-h-time" class="time-val">--:--</div></div>
         <div class="info-card"><h2>品川駅発 (Shinagawa)</h2><div id="adm-s-time" class="time-val">--:--</div></div>
     </div>
-
     <div class="schedule-section">
         <div class="day-group">
             <h3>【平日】</h3>
-            <label>ホテル発</label>
             <textarea id="h_wkday">08:00, 08:30, 09:04, 09:40, 10:16, 10:52, 16:04, 16:39, 17:14, 17:47, 18:20, 18:55, 19:30</textarea>
-            <label>品川駅発</label>
             <textarea id="s_wkday">07:54, 08:22, 08:52, 09:26, 10:02, 10:38, 11:14, 16:26, 17:00, 17:36, 18:08, 18:41, 19:16</textarea>
         </div>
         <div class="day-group">
             <h3>【土日祝】</h3>
-            <label>ホテル発</label>
             <textarea id="h_weekend">09:28, 10:00, 10:32, 11:04, 11:36, 12:08, 12:41, 14:20, 14:55, 15:30, 16:05, 16:40, 17:15, 17:50</textarea>
-            <label>品川駅発</label>
             <textarea id="s_weekend">09:47, 10:19, 10:51, 11:23, 11:55, 12:28, 14:40, 15:16, 15:51, 16:26, 17:01, 17:36</textarea>
         </div>
     </div>
@@ -140,9 +140,7 @@
 <div id="fullscreen-view" ondblclick="exitFullScreen()">
     <p class="fs-label">Next Shuttle Bus</p>
     <h1 id="fs-time" class="fs-next-time">--:--</h1>
-    <p id="fs-eta" class="fs-eta">Departs in -- min</p>
-
-    <div class="fs-footer">
+    <div id="fs-eta" class="fs-eta"></div> <div class="fs-footer">
         <img src="https://shop.marriott.com/on/demandware.static/Sites-MBB-US-Site/-/default/dwd2983f65/images/brand/marriott.svg" alt="Marriott Logo" class="fs-logo">
         <div id="fs-clock" class="fs-clock">00:00:00</div>
     </div>
@@ -150,25 +148,23 @@
     <div id="schedule-overlay"></div>
 </div>
 
-<canvas id="pip-canvas" width="400" height="250"></canvas>
-<video id="pip-video" autoplay playsinline muted></video>
-
 <script>
     function getTimes(id) {
         return document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s !== "");
     }
 
-    function formatEta(diffMin) {
+    // 数字部分だけを <span> で囲む関数
+    function formatEtaHtml(diffMin) {
         if (diffMin === null) return "";
         if (diffMin >= 60) {
             const hrs = Math.floor(diffMin / 60);
             const mins = diffMin % 60;
             const hrUnit = hrs === 1 ? "hr" : "hrs";
             const minUnit = mins === 1 ? "min" : "mins";
-            return `Departs in ${hrs} ${hrUnit} ${mins} ${minUnit}`;
+            return `Departs in <span class="num">${hrs}</span> ${hrUnit} <span class="num">${mins}</span> ${minUnit}`;
         } else {
             const minUnit = diffMin === 1 ? "min" : "mins";
-            return `Departs in ${diffMin} ${minUnit}`;
+            return `Departs in <span class="num">${diffMin}</span> ${minUnit}`;
         }
     }
 
@@ -188,19 +184,13 @@
         const now = new Date();
         const isWeekend = (now.getDay() === 0 || now.getDay() === 6 || document.getElementById('isHoliday').checked);
         const hTimes = isWeekend ? getTimes('h_weekend') : getTimes('h_wkday');
-        const sTimes = isWeekend ? getTimes('s_weekend') : getTimes('s_wkday');
-
         const nH = findNext(hTimes);
-        const nS = findNext(sTimes);
 
-        document.getElementById('adm-h-time').innerText = nH.time;
-        document.getElementById('adm-s-time').innerText = nS.time;
-
+        // 管理画面用（省略）
         document.getElementById('fs-time').innerText = nH.time;
-        document.getElementById('fs-eta').innerText = nH.eta !== null ? formatEta(nH.eta) : "";
+        // HTMLとして挿入することで数字の色分けを適用
+        document.getElementById('fs-eta').innerHTML = nH.eta !== null ? formatEtaHtml(nH.eta) : "";
         document.getElementById('fs-clock').innerText = now.toLocaleTimeString('ja-JP', { hour12: false });
-
-        updatePiP(nH.time, nH.eta);
     }
 
     function enterFullScreen() {
@@ -218,17 +208,12 @@
 
     document.getElementById('fullscreen-view').addEventListener('click', (e) => {
         const overlay = document.getElementById('schedule-overlay');
-        if (overlay.style.display === 'grid') {
-            overlay.style.display = 'none';
-            return;
-        }
-        
+        if (overlay.style.display === 'grid') { overlay.style.display = 'none'; return; }
         overlay.innerHTML = '';
         const now = new Date();
         const nowMin = now.getHours() * 60 + now.getMinutes();
         const isWeekend = (now.getDay() === 0 || now.getDay() === 6 || document.getElementById('isHoliday').checked);
         const hTimes = isWeekend ? getTimes('h_weekend') : getTimes('h_wkday');
-
         hTimes.forEach(t => {
             const [h, m] = t.split(':').map(Number);
             const div = document.createElement('div');
@@ -239,32 +224,6 @@
         overlay.style.display = 'grid';
         e.stopPropagation();
     });
-
-    document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) document.getElementById('fullscreen-view').style.display = 'none';
-    });
-
-    async function startPiP() {
-        const video = document.getElementById('pip-video');
-        const canvas = document.getElementById('pip-canvas');
-        video.srcObject = canvas.captureStream();
-        await video.play();
-        await video.requestPictureInPicture();
-    }
-
-    function updatePiP(time, eta) {
-        const canvas = document.getElementById('pip-canvas');
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#b4975a";
-        ctx.font = "bold 90px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(time, 200, 120);
-        ctx.fillStyle = "white";
-        ctx.font = "40px sans-serif";
-        ctx.fillText(eta !== null ? `${eta} min` : "", 200, 200);
-    }
 
     setInterval(update, 1000);
     window.onload = update;

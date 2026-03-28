@@ -52,27 +52,28 @@
             font-size: 8vw; font-weight: bold; color: var(--m-gold); margin: 0;
             text-shadow: 0 0 15px var(--m-gold-light), 0 0 5px var(--m-gold);
         }
-        .fs-next-time { font-size: 25vw; font-weight: bold; line-height: 0.8; margin: 2vh 0; }
+        .fs-next-time { font-size: 22vw; font-weight: bold; line-height: 0.8; margin: 2vh 0; }
         .fs-eta { font-size: 6vw; opacity: 0.9; }
 
         .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 15px; }
         .fs-logo { width: 50px; height: 50px; }
         .fs-clock { font-size: 2.2vw; opacity: 0.6; }
 
-        /* --- エレガントな時刻表 (全画面の中に配置) --- */
+        /* --- エレガントな時刻表 (中央揃え調整) --- */
         #schedule-overlay {
             display: none;
-            position: absolute; /* 全画面ビューに対して絶対配置 */
+            position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.96);
             backdrop-filter: blur(20px);
             z-index: 3100;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 20px;
-            padding: 12vh 6vw;
+            justify-content: center; /* 横方向の中央揃え */
+            align-content: center;   /* 縦方向の中央揃え */
+            gap: 25px;
+            padding: 10vh 10vw;
             box-sizing: border-box;
             overflow-y: auto;
-            align-content: start;
         }
         .tile {
             padding: 25px 10px;
@@ -169,7 +170,7 @@
             const [h, m] = t.split(':').map(Number);
             return (h * 60 + m) > nowMin;
         });
-        if (!next) return { time: "終便出発済み", eta: null };
+        if (!next) return { time: "End of Service", eta: null };
         const [nh, nm] = next.split(':').map(Number);
         return { time: next, eta: (nh * 60 + nm) - nowMin };
     }
@@ -187,7 +188,8 @@
         document.getElementById('adm-s-time').innerText = nS.time;
 
         document.getElementById('fs-time').innerText = nH.time;
-        document.getElementById('fs-eta').innerText = formatEta(nH.eta);
+        // End of Service のときはカウントダウンを表示しない
+        document.getElementById('fs-eta').innerText = nH.eta !== null ? formatEta(nH.eta) : "";
         document.getElementById('fs-clock').innerText = now.toLocaleTimeString('ja-JP', { hour12: false });
 
         updatePiP(nH.time, nH.eta);
@@ -206,7 +208,6 @@
         document.getElementById('fullscreen-view').style.display = 'none';
     }
 
-    // 全画面中のタップで時刻表表示
     document.getElementById('fullscreen-view').addEventListener('click', (e) => {
         const overlay = document.getElementById('schedule-overlay');
         if (overlay.style.display === 'grid') {
@@ -231,12 +232,10 @@
         e.stopPropagation();
     });
 
-    // Escキー監視
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement) document.getElementById('fullscreen-view').style.display = 'none';
     });
 
-    // PiP (子画面)
     async function startPiP() {
         const video = document.getElementById('pip-video');
         const canvas = document.getElementById('pip-canvas');

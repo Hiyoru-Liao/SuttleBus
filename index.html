@@ -10,6 +10,7 @@
             --m-black: #000000;
             --m-gold: #b4975a;
             --m-white: #ffffff;
+            --m-red: #e0001a; /* マリオット・レッド */
             --m-gold-light: rgba(180, 151, 90, 0.4);
             --bg-dark: #121212;
             --card-bg: #1e1e1e;
@@ -17,14 +18,14 @@
 
         body {
             margin: 0; padding: 0;
-            background-color: var(--bg-dark);
+            background-color: var(--m-black);
             color: var(--m-white);
             font-family: "Effra", "Noto Sans JP", sans-serif;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
-        /* --- 管理画面 --- */
-        .admin-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        /* --- 管理画面 (Admin) --- */
+        .admin-container { padding: 20px; max-width: 1200px; margin: 0 auto; background: var(--bg-dark); min-height: 100vh; }
         .top-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--m-gold); padding-bottom: 15px; margin-bottom: 20px; }
         button { background: var(--m-gold); color: black; border: none; padding: 10px 25px; font-weight: bold; cursor: pointer; border-radius: 50px; }
         .next-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
@@ -54,30 +55,31 @@
         }
         .fs-next-time { font-size: 22vw; font-weight: bold; line-height: 0.8; margin: 2vh 0; color: var(--m-white); }
         
-        /* ETAエリアの配色調整 */
+        /* ETAエリアの配色 */
         .fs-eta { 
             font-size: 6vw; 
-            color: var(--m-white); /* 英字を白に設定 */
+            color: var(--m-white); /* 英字は白 */
+            opacity: 1;
         }
         .fs-eta span.num {
-            color: var(--m-gold); /* 数字（カウントダウン）だけを金に設定 */
+            color: var(--m-gold); /* 数字はゴールド */
             font-weight: bold;
-            text-shadow: 0 0 10px var(--m-gold-light); /* 数字を少し輝かせる */
+            text-shadow: 0 0 10px var(--m-gold-light);
         }
 
         .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 25px; }
         
-        /* ロゴを白に変更するためのフィルタ */
+        /* ロゴを赤色に変更するフィルタ */
         .fs-logo { 
             width: 150px; 
             height: auto;
-            filter: brightness(0) invert(1); /* 黒いSVGを白に反転 */
-            opacity: 0.9;
+            filter: invert(15%) sepia(95%) saturate(6932%) hue-rotate(354deg) brightness(92%) contrast(121%);
+            opacity: 1;
         }
         
         .fs-clock { font-size: 2.2vw; opacity: 0.6; font-weight: 300; color: var(--m-white); }
 
-        /* --- 時刻表オーバーレイ --- */
+        /* --- 時刻表オーバーレイ (中央揃え) --- */
         #schedule-overlay {
             display: none;
             position: absolute;
@@ -184,8 +186,10 @@
         const now = new Date();
         const isWeekend = (now.getDay() === 0 || now.getDay() === 6 || document.getElementById('isHoliday').checked);
         const hTimes = isWeekend ? getTimes('h_weekend') : getTimes('h_wkday');
+        const sTimes = isWeekend ? getTimes('s_weekend') : getTimes('s_wkday');
+
         const nH = findNext(hTimes);
-        const nS = findNext(isWeekend ? getTimes('s_weekend') : getTimes('s_wkday'));
+        const nS = findNext(sTimes);
 
         document.getElementById('adm-h-time').innerText = nH.time;
         document.getElementById('adm-s-time').innerText = nS.time;

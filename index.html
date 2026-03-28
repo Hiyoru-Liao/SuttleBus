@@ -55,8 +55,17 @@
         .fs-next-time { font-size: 22vw; font-weight: bold; line-height: 0.8; margin: 2vh 0; }
         .fs-eta { font-size: 6vw; opacity: 0.9; }
 
-        .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 20px; }
-        .fs-logo { width: 60px; height: auto; }
+        .fs-footer { position: absolute; bottom: 4vh; left: 4vw; display: flex; align-items: center; gap: 25px; }
+        
+        /* ロゴのスタイル設定 */
+        .fs-logo { 
+            width: 150px; /* ロゴの幅を調整（必要に応じて変更してください） */
+            height: auto;
+            /* 黒いSVGを白く反転させるフィルタ */
+            filter: brightness(0) invert(1);
+            opacity: 0.8; /* 少し透過させて背景になじませる */
+        }
+        
         .fs-clock { font-size: 2.2vw; opacity: 0.6; font-weight: 300; }
 
         /* --- エレガントな時刻表 --- */
@@ -134,9 +143,7 @@
     <p id="fs-eta" class="fs-eta">Departs in -- min</p>
 
     <div class="fs-footer">
-        <svg class="fs-logo" viewBox="0 0 100 80" preserveAspectRatio="xMidYMid meet">
-            <path d="M10,80 L10,20 L30,20 L50,55 L70,20 L90,20 L90,80 L75,80 L75,45 L50,80 L25,45 L25,80 Z" fill="var(--m-gold)"/>
-        </svg>
+        <img src="https://shop.marriott.com/on/demandware.static/Sites-MBB-US-Site/-/default/dwd2983f65/images/brand/marriott.svg" alt="Marriott Logo" class="fs-logo">
         <div id="fs-clock" class="fs-clock">00:00:00</div>
     </div>
 
